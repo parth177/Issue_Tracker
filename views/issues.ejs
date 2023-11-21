@@ -1,0 +1,299 @@
+<div class="container mt-5">
+  <h1>Project Detail</h1>
+
+  <!-- Display project information -->
+  <div class="card">
+    <div class="card-header">Project Information</div>
+    <div class="card-body">
+      <h5 class="card-title">
+        Project Name: <span id="projectName"><%=project.project_name%></span>
+      </h5>
+      <p class="card-text">
+        Description:
+        <span id="projectDescription"><%=project.description%></span>
+      </p>
+      <p class="card-text">
+        Author: <span id="projectAuthor"><%=project.author %></span>
+      </p>
+    </div>
+  </div>
+
+  <!-- Filters for issues -->
+  <form id="filterForm" class="mt-3 border p-3">
+    <div class="form-group form-row">
+      <div class="col-4">
+        <label for="labels">Filter by Labels</label>
+        <select multiple class="form-control" id="labels" name="labels">
+          <!-- Populate labels dynamically from your data -->
+          <!-- <% for (issue of issues) { %>
+          <% for (label of issue.labels) {%>
+          <option value="<%= label %>"><%= label %></option>
+          <%}%>
+          <%}%> -->
+          <!-- Add more label options -->
+        </select>
+      </div>
+      <div class="col-4">
+        <label for="author">Filter by Author</label>
+        <input type="text" class="form-control" id="filterAuthor" name="author" />
+      </div>
+      <div class="col-4">
+        <label for="author">Filter by Title/Description</label>
+        <input
+          type="text"
+          class="form-control"
+          id="search"
+          placeholder="Search by Title or Description"
+          name = "filterDescription"
+        />
+      </div>
+    </div>
+    <div class="form-group col-3"></div>
+    <button type="submit" id="filter" class="btn btn-primary">Apply Filters</button>
+  </form>
+
+  <!-- Search bar for title and description -->
+  
+  <!-- List of issues -->
+  <div class="mt-3">
+    <div class="d-flex justify-content-between">
+      <div>
+        <h3>List of Issues</h3>
+      </div>
+      <div>
+            <button
+        type="button"
+        class="btn btn-success"
+        data-toggle="modal"
+        data-target="#issueModal"
+      >
+        Create Issue
+      </button>
+      </div>
+      </div>
+    <ul id="issueList" class="list-group m-3">
+      <!-- Display issues here dynamically -->
+      <% for (issue of issues) { %>
+        <li class="list-group-item">
+          <div class="d-flex justify-content-between">
+              <div>
+                  <h5 class="mb-1"><%= issue.title%></h5>
+                  <p class="mb-1"><%= issue.description%></p>
+                  <small>Author: <%= issue.author %></small>
+                  <div>
+                    <small>Labels : </small>
+                    <% for (label of issue.labels) {%>
+                    <span class="badge badge-primary"><%= label %></span>
+                    <%}%>
+                  </div>
+              </div>
+              <div>
+                <a href="/issue/delete/<%=issue._id%>" class="btn btn-danger btn-sm ml-2">Delete</a>
+                  
+              </div>
+          </div>
+      </li>
+      <%}%>
+      <!-- Add more list items for additional issues -->
+    </ul>
+  </div>
+
+
+  <div class="modal fade" id="issueModal" tabindex="-1" role="dialog" aria-labelledby="issueModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="issueModalLabel">Create Issue</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="new-issue">
+                    <div class="form-group">
+                        <label for="issueTitle">Issue Title</label>
+                        <input type="text" class="form-control" id="issueTitle" placeholder="Enter issue title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="author">Author</label>
+                        <input type="text" class="form-control" id="aut" placeholder="Enter author name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" id="description" rows="4" placeholder="Enter issue description" required></textarea>
+                    </div>
+                    <div class="form-group">
+                      <label for="labels">Labels</label>
+                      <div class="input-group">
+                        <input type="text" class="form-control" id="labelInput" list="labelSuggestions">
+                            <datalist id="labelSuggestions">
+                                
+                            </datalist>
+                          
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" type="button" id="addLabel">Add Label</button>
+                        </div>
+                    </div>
+                    <p class="text-sm text-danger" id="label-error"></p>
+                    </div>
+                        
+                    <ul id="labelList" class="list-unstyled"></ul>
+                
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary" id="saveIssue">Save Issue</button>
+            </div>
+          </form>
+        </div>
+    </div>
+</div>
+
+<script>
+<% for (issue of issues) { %>
+<% for (label of issue.labels) {%>
+  
+  if($(`#labels option[value="<%=label%>"]`).length <    1 ){
+            $('#labelSuggestions').append(`<option value="<%=label%>"><%=label%></option>`);
+            $('#labels').append(`<option value="<%=label%>"><%=label%></option>`);
+          }
+<%}%>
+<%}%>
+    const addLabelButton = document.getElementById('addLabel');
+    const labelInput = document.getElementById('labelInput');
+    const labelList = document.getElementById('labelList');
+    const lableErr = document.getElementById('label-error');
+    const filterForm = document.getElementById('filterForm');
+    const issueList = $('#issueList');
+    addLabelButton.addEventListener('click', function() {
+      
+        const labelValue = labelInput.value.trim();
+
+        if (labelValue) {
+            const li = document.createElement('span');
+            li.className  = 'badge-primary badge mx-1 ';
+            lableErr.innerHTML =""
+            li.textContent = labelValue;
+            const removeButton = document.createElement('button');
+                removeButton.textContent = 'X';
+                removeButton.className = 'btn btn-sm bg-transparent text-danger';
+                removeButton.addEventListener('click', function() {
+                    li.remove();
+                });
+            li.appendChild(removeButton);
+            labelList.appendChild(li);
+            labelInput.value = '';
+        }
+    });
+
+    document.getElementById('new-issue').addEventListener('submit', function(e) {
+        e.preventDefault();
+      
+        const title = document.getElementById('issueTitle').value;
+        const author = document.getElementById('aut').value;
+        const description = document.getElementById('description').value;
+        const labels = Array.from(labelList.querySelectorAll('span')).map(li => li.textContent.slice(0, -1));
+        const project = "<%=project._id%>"; 
+        if(labels == ""){
+           lableErr.innerHTML= "Please add atleast one lable..";
+          return 
+        }
+        $.ajax({
+          type: 'post',
+          url: '/issue/create',
+          data: {title,author,description,labels,project},
+          success: function (data) {
+            
+            console.log("data");
+            console.log(data);
+            let issueDom =  createNewIssueDom(data.data.issue);
+            $('#issueList').prepend(issueDom);
+
+          },
+          error: function (err) {},
+        });
+
+        // Reset the form
+        document.getElementById('issueTitle').value = '';
+        document.getElementById('aut').value = '';
+        document.getElementById('description').value = '';
+        labelInput.value = '';
+        labelList.innerHTML = ''; // Clear the label list
+
+        // Close the modal
+        
+        $('#issueModal').modal('hide');
+    });
+    let createNewIssueDom = function(issue){
+      let labels ='';
+      console.log("------------");
+      console.log(issue);
+      
+      if(issue.labels){
+          issue.labels.forEach(element => {
+          
+          if($(`#labels option[value="${element}"]`).length <    1 ){
+            $('#labelSuggestions').append(`<option value="${element}">${element}</option>`);
+            $('#labels').append(`<option value="${element}">${element}</option>`);
+          }
+          
+          labels += `<span class="badge badge-primary mx-1">${element}</span>`
+          
+        });
+      }
+      
+      return `<li class="list-group-item">
+          <div class="d-flex justify-content-between">
+              <div>
+                  <h5 class="mb-1">${issue.title}</h5>
+                  <p class="mb-1">${issue.description}</p>
+                  <small>Author: ${issue.author}</small>
+                  <div>
+                    <small>Labels : </small>
+                    ${labels} 
+                    
+                  </div>
+              </div>
+              <div>
+                  
+                <a href="/issue/delete/${issue._id}" class="btn btn-danger btn-sm ml-2">Delete</a>
+              </div>
+          </div>
+      </li>`
+    }
+    filterForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const labels = $('#labels').val();
+      const author = document.getElementById('filterAuthor').value;
+      const description = document.getElementById('search').value;
+      
+      let data = {
+        labels:labels,
+        author:author,
+        title:description
+      }
+      console.log(data.labels);
+      $.ajax({
+          type: 'post',
+          url: '/issue/filter',
+          data: data,
+          success: function (data) {
+
+            $('#issueList').html("");
+            
+            
+            console.log(data);
+            data.data.issue.forEach(element=>{
+              
+            let issueDom =  createNewIssueDom(element); 
+            $('#issueList').prepend(issueDom);
+            });
+            
+          },
+          error: function (err) {},
+        });
+    });
+</script>
+    <!-- Modal markup for creating an issue -->
+  </div>
+</div>
